@@ -1,0 +1,53 @@
+#include <stdio.h>
+#include <string.h>
+#define NUM_AISLES 100
+
+typedef struct item_tag
+{   
+    int item_id;
+    int quantity;
+    char *expiry_date;
+    int threshold_quantity;
+    struct item_tag *prev;
+    struct item_tag *next;
+}Item;
+
+typedef struct Aisle_tag
+{
+    char *aisle_name;
+    Item *head;
+}Aisle_tag;
+
+typedef struct Aisle
+{
+    Aisle_tag arr[NUM_AISLES];
+    int curr_size;
+}Aisle;
+
+Item *CreateItem(int id, int quan, char *expiry, int tq)
+{
+    Item *nitem;
+    nitem->item_id = id;
+    nitem->quantity = quan;
+    nitem->expiry_date = (char *)malloc(sizeof(expiry) + 1);
+    strcpy(nitem->expiry_date, expiry);
+    nitem->threshold_quantity = tq;
+    nitem->next = nitem->prev = NULL;
+    return nitem;
+}
+
+void InitialiseAisle(Aisle *a)
+{
+    a->curr_size = 0;
+    for(int i = 0 ; i < NUM_AISLES; i++)
+    {
+        (a->arr[i]).aisle_name = NULL;
+        (a->arr[i]).head = NULL;
+    }
+}
+
+void CreateAisles(char *a[], Aisle *a)
+{
+    
+}
+
