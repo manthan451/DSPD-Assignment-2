@@ -2,11 +2,19 @@
 #include <string.h>
 #define NUM_AISLES 100
 
+typedef struct date
+{
+    int day;
+    int month;
+    int year;//in 2 dig
+}date;
+
 typedef struct item_tag
 {   
     int item_id;
+    char *itemname;
     int quantity;
-    char *expiry_date;
+    date *expiry_date;
     int threshold_quantity;
     struct item_tag *prev;
     struct item_tag *next;
@@ -14,40 +22,148 @@ typedef struct item_tag
 
 typedef struct Aisle_tag
 {
+    int aisle_no;
     char *aisle_name;
     Item *head;
+    struct Aisle_tag *next;
 }Aisle_tag;
 
 typedef struct Aisle
 {
-    Aisle_tag arr[NUM_AISLES];
-    int curr_size;
+    Aisle_tag *head;
+    Aisle_tag *tail;
 }Aisle;
 
-Item *CreateItem(int id, int quan, char *expiry, int tq)
+Item *CreateItem(int id, char *name,  int quan, date *d, int tq)
 {
-    Item *nitem;
+    Item *nitem = (Item *)malloc(sizeof(Item));
     nitem->item_id = id;
+    nitem->itemname = (char *)malloc(sizeof(name)+1);
+    strcpy(nitem->itemname, name);
     nitem->quantity = quan;
-    nitem->expiry_date = (char *)malloc(sizeof(expiry) + 1);
-    strcpy(nitem->expiry_date, expiry);
+    nitem->expiry_date = d;
     nitem->threshold_quantity = tq;
     nitem->next = nitem->prev = NULL;
     return nitem;
 }
 
-void InitialiseAisle(Aisle *a)
+Aisle_tag *CreateAisle(char *name)
 {
-    a->curr_size = 0;
-    for(int i = 0 ; i < NUM_AISLES; i++)
+    Aisle_tag *aptr = (Aisle_tag *)malloc(sizeof(Aisle_tag));
+    aptr->aisle_name = (char *)malloc(sizeof(strlen(name))+1);
+    strcpy(aptr->aisle_name, name);
+    aptr->next = NULL;
+    aptr->head = NULL;
+    aptr->aisle_no = 0;
+};
+
+Aisle *CreateMart(char *name[], int size)
+{
+    Aisle *aisle;
+    aisle->tail = aisle->head = CreateAisle(name[0]);
+    aisle->tail->aisle_no = 1;
+    for(int i = 1; i < size; i++)
     {
-        (a->arr[i]).aisle_name = NULL;
-        (a->arr[i]).head = NULL;
+        aisle->tail= aisle->tail->next = CreateAisle(name[i]);
+        aisle->tail->aisle_no = i+1;
+    }
+    return aisle;
+}
+
+void AddItem(Aisle *aisle)
+{
+    Item *nitem;
+    int id, quan;
+    char *name;
+    date *d;
+    d = (date *)malloc(sizeof(date));
+    printf("Input id: ");
+    scanf("%d", &id);
+    printf("Input name: ");
+    scanf("%s", name);
+    printf("Input quantity: ");
+    scanf("%d", &quan);
+    printf("Input expiry date (DD): ");
+    scanf("%d", &d->day);
+    printf("Input expiry month (MM): ");
+    scanf("%d", &d->month);
+    printf("Input expiry year (YY): ");
+    scanf("%d", &d->year);
+    int a_no;
+    Aisle_tag* ptr = aisle->head;
+    do
+    {
+        printf("Input Aisle number to add item in: ");
+        scanf("%d", &a_no);
+        ptr = aisle->head;
+        while(ptr != NULL && ptr->aisle_no != a_no)
+        {
+            ptr = ptr->next;
+        }
+        if(ptr == NULL) printf("Aisle Number not found, try Again: \n");
+    }while(ptr == NULL);
+    Item *iptr = ptr->head;
+    while(iptr->next != NULL && !(iptr->item_id == id && iptr->expiry_date->year == d->year && iptr->expiry_date->month == d->month && iptr->expiry_date->day == d->day))
+    {
+        iptr = iptr->next;
+    }
+    if(iptr->next == NULL)
+    {
+        printf("This is a new item, adding the item: ");
+        int t_quan;
+        printf("Input threshold quantity for item id %d :", id);
+        scanf("%d", &t_quan);
+        iptr->next = CreateItem(id, name, quan, d, t_quan);
+        iptr->next->prev = iptr->next;
+        printf("Addition successful\n");
+    }
+    else
+    {
+        printf("This item already exists\n");
+        iptr->quantity += quan;
+        printf("Addition successful\n");
+    }
+
+}
+
+void DeleteItem(Aisle *aisle)
+{
+    int a_no, id;
+    printf("Input Aisle number to delete item from: ");
+    scanf("%d", &a_no);
+    printf("Input ID to delete: ");
+    scanf("%d", &id);
+    Aisle_tag *aptr = aisle->head;
+    while(aptr != NULL && aptr->aisle_no != a_no)
+    {
+        aptr = aptr->next;
+    }
+    if(aptr != NULL)
+    {
+        Item *iptr = aptr->head;
+        while(iptr != NULL && iptr->item_id != id)
+        {
+            iptr = iptr->next;
+        }
+        if(iptr != NULL)
+        {
+            if(iptr->next != NULL) iptr->next->prev = iptr->prev;
+            if(iptr->prev != NULL) iptr->prev->next = iptr->next;
+            else aisle->head = iptr->next;
+            free(iptr->itemname);
+            free(iptr->expiry_date);
+            free(iptr);
+        }
+        else
+        {
+            printf("Item not found! Cant delete\n");
+        }
+    }
+    else
+    {
+        printf("Aisle Not found\n");
     }
 }
 
-void CreateAisles(char *a[], Aisle *a)
-{
-    
-}
+
 
