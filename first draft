@@ -32,7 +32,7 @@ typedef struct Aisle
 {
     Aisle_tag *head;
     Aisle_tag *tail;
-}Aisle;
+}Aislelist;
 
 Item *CreateItem(int id, char *name,  int quan, date *d, int tq)
 {
@@ -55,22 +55,23 @@ Aisle_tag *CreateAisle(char *name)
     aptr->next = NULL;
     aptr->head = NULL;
     aptr->aisle_no = 0;
+    return aptr;
 };
 
-Aisle *CreateMart(char *name[], int size)
+Aislelist *CreateMart(char *name[], int size)
 {
-    Aisle *aisle;
-    aisle->tail = aisle->head = CreateAisle(name[0]);
-    aisle->tail->aisle_no = 1;
+    Aislelist *aislelist;
+    aislelist->tail = aislelist->head = CreateAisle(name[0]);
+    aislelist->tail->aisle_no = 1;
     for(int i = 1; i < size; i++)
     {
-        aisle->tail= aisle->tail->next = CreateAisle(name[i]);
-        aisle->tail->aisle_no = i+1;
+        aislelist->tail= aislelist->tail->next = CreateAisle(name[i]);
+        aislelist->tail->aisle_no = i+1;
     }
-    return aisle;
+    return aislelist;
 }
 
-void AddItem(Aisle *aisle)
+void AddItem(Aislelist *aisle)
 {
     Item *nitem;
     int id, quan;
@@ -126,7 +127,7 @@ void AddItem(Aisle *aisle)
 
 }
 
-void DeleteItem(Aisle *aisle)
+void DeleteItem(Aislelist *aisle)
 {
     int a_no, id;
     printf("Input Aisle number to delete item from: ");
@@ -164,6 +165,3 @@ void DeleteItem(Aisle *aisle)
         printf("Aisle Not found\n");
     }
 }
-
-
-
