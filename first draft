@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+
 #define ARRAYSIZE 100
 
 typedef struct date
@@ -33,7 +35,7 @@ Item *CreateItem(int id, char *name,  int quan, date *d, int tq)
 {
     Item *nitem = (Item *)malloc(sizeof(Item));
     nitem->item_id = id;
-    nitem->itemname = (char *)malloc(sizeof(name)+1);
+    nitem->itemname = (char *)malloc(strlen(name) + 1);
     strcpy(nitem->itemname, name);
     nitem->quantity = quan;
     nitem->expiry_date = d;
@@ -45,12 +47,20 @@ Item *CreateItem(int id, char *name,  int quan, date *d, int tq)
 Aisle_tag *CreateAisle(char *name, int a_no)
 {
     Aisle_tag *aptr = (Aisle_tag *)malloc(sizeof(Aisle_tag));
-    aptr->aisle_name = (char *)malloc(sizeof(strlen(name))+1);
+    aptr->aisle_name = (char *)malloc(strlen(name)+1);
     strcpy(aptr->aisle_name, name);
     aptr->head = NULL;
     aptr->aisle_no = a_no;
     return aptr;
 };
+
+date* CreateDate(int DD, int MM, int YY) {
+    date* newDate = (date*)malloc(sizeof(date));
+    newDate->day = DD;
+    newDate->month = MM;
+    newDate->year = YY;
+    return newDate;
+}
 
 void initializeAisleArray()
 {
@@ -190,8 +200,8 @@ int isExpired(date *expiry, date *target)
 
 int isItemAvailable (int id, int qty_req, date* d)
 {
-    int i, retval;
-    retval = 0;
+    int i, retval, flag;
+    retval = flag = 0;
 
     Item *iptr;
 
@@ -202,13 +212,14 @@ int isItemAvailable (int id, int qty_req, date* d)
             iptr = AisleArray[i]->head;
             while(iptr != NULL && iptr->item_id != id)
             {
-                iptr = iptr->next
+                iptr = iptr->next;
             }
             if(iptr != NULL)
             {
                 if(iptr->quantity >= qty_req && !isExpired(iptr->expiry_date, d))
                 {
                     retval = 1;
+                    flag = 1;
                 }
             }
         }
@@ -303,12 +314,91 @@ void ThresholdCheck(Item* iptr) //To be called at the time of purchase
     }
 }
 
+// void PrintMartFile(char *filename)
+// {
+//     FILE *file = fopen(filename, "w");
+
+//     int i;
+//     Item *ptr;
+
+//     for(i = 0; i < ARRAYSIZE; i++)
+//     {
+//         if(AisleArray[i] != NULL)
+//         {
+//             fprintf(file, "\nAisle no = %d  Aisle name: %s \n", AisleArray[i]->aisle_no, AisleArray[i]->aisle_name);
+//             ptr = AisleArray[i]->head;
+//             while(ptr!=NULL)
+//             {
+//                 fprintf(file, "")
+//             }
+//         }
+//     }
+// }
+
+void PrintMart()
+{
+    int i;
+    Item *ptr;
+
+    for(i = 0; i < ARRAYSIZE; i++)
+    {
+        if(AisleArray[i] != NULL)
+        {
+            printf("\nAisle no = %d  Aisle name: %s \n", AisleArray[i]->aisle_no, AisleArray[i]->aisle_name);
+            ptr = AisleArray[i]->head;
+            while(ptr!=NULL)
+            {
+                printf("Item ID: %d\t\t\tItem name: %s\t\t\tQuantity: %d\t\t\tThreshold qty: %d\t\t\texpiry date: %d/%d/%d\n", ptr->item_id, ptr->itemname, ptr->quantity, ptr->threshold_quantity, ptr->expiry_date->day, ptr->expiry_date->month, ptr->expiry_date->year);
+                ptr = ptr->next;
+            }
+            printf("\n");
+        }
+    }
+}
+
 void main()
 {
     int i, j;
+    FILE *file = fopen("walmart6.csv", "r");
 
-    FILE *file = fopen("walmart.csv", "r");
+    if (file == NULL) {
+        printf("Error opening file.\n");
+        return;
+    }
 
-    
+    for(i = 0; i < 5; i++)
+    {
+        char aislename[50];
+        fgets(aislename, sizeof(aislename), file);
 
+        AisleArray[i] = CreateAisle(aislename, i);
+
+        Item *last = NULL;
+        for(j = 0; j < 5; j++)
+        {
+            int DD, MM, YY, id, quan, tq;
+            char name[50];
+
+            fscanf(file,"%d,%49[^,],%d,%d,%d,%d,%d\n", &id, name, &quan, &DD, &MM, &YY, &tq);
+
+            date *d = CreateDate(DD, MM, YY);
+            Item *iptr = CreateItem(id, name, quan, d, tq);
+            Item *ptr = iptr;
+
+            if(j == 0)
+            {
+                AisleArray[i]->head = iptr;
+                last = iptr;
+                last->next = NULL;
+                last->prev = NULL;
+            }
+            else
+            {
+                last->next = iptr;
+                iptr->prev = last;
+                last = iptr;
+            }
+        }    
+    }
+    PrintMart();
 }
