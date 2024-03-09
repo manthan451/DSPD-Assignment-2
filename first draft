@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#define NUM_AISLES 100
+#define ARRAYSIZE 100
 
 typedef struct date
 {
@@ -20,19 +20,14 @@ typedef struct item_tag
     struct item_tag *next;
 }Item;
 
-typedef struct Aisle_tag
+typedef struct Aisle_tag    //for one ailse in the walmart
 {
-    int aisle_no;
+    int aisle_no; // starts from 1
     char *aisle_name;
     Item *head;
-    struct Aisle_tag *next;
 }Aisle_tag;
 
-typedef struct Aisle
-{
-    Aisle_tag *head;
-    Aisle_tag *tail;
-}Aislelist;
+Aisle_tag* AisleArray[ARRAYSIZE];    //indices are array nos
 
 Item *CreateItem(int id, char *name,  int quan, date *d, int tq)
 {
@@ -47,121 +42,273 @@ Item *CreateItem(int id, char *name,  int quan, date *d, int tq)
     return nitem;
 }
 
-Aisle_tag *CreateAisle(char *name)
+Aisle_tag *CreateAisle(char *name, int a_no)
 {
     Aisle_tag *aptr = (Aisle_tag *)malloc(sizeof(Aisle_tag));
     aptr->aisle_name = (char *)malloc(sizeof(strlen(name))+1);
     strcpy(aptr->aisle_name, name);
-    aptr->next = NULL;
     aptr->head = NULL;
-    aptr->aisle_no = 0;
+    aptr->aisle_no = a_no;
     return aptr;
 };
 
-Aislelist *CreateMart(char *name[], int size)
+void initializeAisleArray()
 {
-    Aislelist *aislelist;
-    aislelist->tail = aislelist->head = CreateAisle(name[0]);
-    aislelist->tail->aisle_no = 1;
-    for(int i = 1; i < size; i++)
+    int i;
+    for(i = 0; i < ARRAYSIZE; i++)
     {
-        aislelist->tail= aislelist->tail->next = CreateAisle(name[i]);
-        aislelist->tail->aisle_no = i+1;
+        AisleArray[i] = NULL;
     }
-    return aislelist;
 }
 
-void AddItem(Aislelist *aisle)
+void DeleteItem(Item *iptr)
 {
-    Item *nitem;
-    int id, quan;
-    char *name;
+    free(iptr->itemname);
+    free(iptr->expiry_date);
+    free(iptr);
+}
+
+void AddOrUpdateItem(int id, char *name,  int quan, int tq, int aisle_no)  //To add item with item ID id in the aisleno aisle_no
+{
     date *d;
     d = (date *)malloc(sizeof(date));
-    printf("Input id: ");
-    scanf("%d", &id);
-    printf("Input name: ");
-    scanf("%s", name);
-    printf("Input quantity: ");
-    scanf("%d", &quan);
     printf("Input expiry date (DD): ");
     scanf("%d", &d->day);
     printf("Input expiry month (MM): ");
     scanf("%d", &d->month);
     printf("Input expiry year (YY): ");
     scanf("%d", &d->year);
-    int a_no;
-    Aisle_tag* ptr = aisle->head;
-    do
+
+    Item *iptr = CreateItem(id, name, quan, d, tq);
+
+    if(AisleArray[aisle_no] == NULL)
     {
-        printf("Input Aisle number to add item in: ");
-        scanf("%d", &a_no);
-        ptr = aisle->head;
-        while(ptr != NULL && ptr->aisle_no != a_no)
-        {
-            ptr = ptr->next;
-        }
-        if(ptr == NULL) printf("Aisle Number not found, try Again: \n");
-    }while(ptr == NULL);
-    Item *iptr = ptr->head;
-    while(iptr->next != NULL && !(iptr->item_id == id && iptr->expiry_date->year == d->year && iptr->expiry_date->month == d->month && iptr->expiry_date->day == d->day))
-    {
-        iptr = iptr->next;
-    }
-    if(iptr->next == NULL)
-    {
-        printf("This is a new item, adding the item: ");
-        int t_quan;
-        printf("Input threshold quantity for item id %d :", id);
-        scanf("%d", &t_quan);
-        iptr->next = CreateItem(id, name, quan, d, t_quan);
-        iptr->next->prev = iptr->next;
-        printf("Addition successful\n");
+        char *Aislename;
+        printf("No Aisle with this no, please enter Aisle name to create Aisle\n");
+        scanf("%s", Aislename);
+        AisleArray[aisle_no] = CreateAisle(Aislename, aisle_no);
+        AisleArray[aisle_no]->head = iptr;
+        printf("Item Successfully Added\n");
     }
     else
     {
-        printf("This item already exists\n");
-        iptr->quantity += quan;
-        printf("Addition successful\n");
+        Item *ptr = AisleArray[aisle_no]->head;
+        if(ptr == NULL)
+        {
+            printf("Aisle is Empty\n");
+            AisleArray[aisle_no]->head = iptr;
+        }
+        else
+        {
+            while(ptr->next != NULL && ptr->item_id != id)
+            {
+                ptr = iptr->next;
+            }
+            if(ptr->next == NULL)
+            {
+                printf("This is a new item, adding the item:\n");
+                ptr->next->prev = iptr->next;
+                printf("Addition successful\n");
+            }
+            else
+            {
+                printf("This item already exists\n");
+                iptr->quantity += quan;
+                printf("Addition successful\n");
+                DeleteItem(iptr);
+            }
+        }
+
+    }
+}
+
+void DeleteItemFromAisle(int itemid, int a_no)
+{
+    if(AisleArray[a_no] == NULL || AisleArray[a_no]->head == NULL)
+    {
+        printf("Aisle Empty\n");
+    }
+    else if(AisleArray[a_no]->head->item_id == itemid)
+    {
+        Item *ptr = AisleArray[a_no]->head;
+        AisleArray[a_no]->head = AisleArray[a_no]->head->next;
+        AisleArray[a_no]->head->prev = NULL;
+        DeleteItem(ptr);
+    }
+}
+
+void DeleteAisle(int a_no)
+{
+    if(AisleArray[a_no] != NULL)
+    {
+        Item *iptr, *ptr;
+        while(iptr != NULL)
+        {
+            ptr = iptr;
+            iptr = iptr->next;
+            DeleteItem(ptr);
+        }
+        AisleArray[a_no] = NULL;
+    }
+}
+
+int isExpired(date *expiry, date *target)
+{
+    int retval;
+    if(expiry->year < target->year)
+    {
+        retval = 0;
+    }
+    else if(expiry->year > target->year)
+    {
+        retval = 1;
+    }
+    else
+    {
+        if(expiry->month < target->month)
+        {
+            retval = 0;
+        }
+        else if(expiry->month > target->month)
+        {
+            retval = 1;
+        }
+        else
+        {
+            if(expiry->day < target->day)
+            {
+                retval = 0;
+            }
+            else
+            {
+                retval = 1;
+            }
+        }
+    }
+    return retval;
+}
+
+int isItemAvailable (int id, int qty_req, date* d)
+{
+    int i, retval;
+    retval = 0;
+
+    Item *iptr;
+
+    for(i = 0; i < ARRAYSIZE && flag == 0; i++)
+    {
+        if(AisleArray[i] != NULL && AisleArray[i]->head != NULL)
+        {
+            iptr = AisleArray[i]->head;
+            while(iptr != NULL && iptr->item_id != id)
+            {
+                iptr = iptr->next
+            }
+            if(iptr != NULL)
+            {
+                if(iptr->quantity >= qty_req && !isExpired(iptr->expiry_date, d))
+                {
+                    retval = 1;
+                }
+            }
+        }
+    }
+    return retval;
+}
+
+date dateOneWeekLater(date inputDate) {
+    // Add 7 days
+    inputDate.day += 7;
+
+    // Adjust if day exceeds 30 (assuming all months have 30 days)
+    if (inputDate.day > 30) {
+        inputDate.day -= 30;
+        inputDate.month++;
+
+        // Adjust if month exceeds 12
+        if (inputDate.month > 12) {
+            inputDate.month = 1;
+            inputDate.year++; // Increment year if month exceeds 12
+        }
+    }
+    return inputDate;
+}
+
+date dateOneDayLater(date inputDate) {
+    inputDate.day++; // Add one day
+
+    // Adjust if day exceeds 30 (assuming all months have 30 days)
+    if (inputDate.day > 30) {
+        inputDate.day = 1;
+        inputDate.month++;
+
+        // Adjust if month exceeds 12
+        if (inputDate.month > 12) {
+            inputDate.month = 1;
+            inputDate.year++; // Increment year if month exceeds 12
+        }
+    }
+    return inputDate;
+}
+
+void Expiresin1week_ReadyToeat_itemsPrint(date* today)
+{
+    date target = dateOneWeekLater(*today);
+    int i;
+    Item *iptr;
+
+    //clear expired items acc to todays date
+    printf("Printing ready to eat items that'll expire withing one week\n");
+
+    if(AisleArray[3] != NULL && AisleArray[3]->head != NULL)    //Ready to eat items are 4th in the aisle array, index 3
+    {
+        iptr = AisleArray[3]->head;
+        if(isExpired(iptr->expiry_date, &target))
+        {
+            printf("%s\n", iptr->itemname);
+        }
     }
 
 }
 
-void DeleteItem(Aislelist *aisle)
+void Expiresin1day_dairy_itemsPrint(date* today)
 {
-    int a_no, id;
-    printf("Input Aisle number to delete item from: ");
-    scanf("%d", &a_no);
-    printf("Input ID to delete: ");
-    scanf("%d", &id);
-    Aisle_tag *aptr = aisle->head;
-    while(aptr != NULL && aptr->aisle_no != a_no)
+    date target = dateOneWeekLater(*today);
+    int i;
+    Item *iptr;
+    
+    //clear expired items acc to todays date
+    printf("Printing dairy items that'll expire within one day\n");
+
+    if(AisleArray[0] != NULL && AisleArray[0]->head != NULL)
     {
-        aptr = aptr->next;
+        iptr = AisleArray[0]->head;
+        if(isExpired(iptr->expiry_date, &target))
+        {
+            printf("%s\n", iptr->itemname);
+        }
     }
-    if(aptr != NULL)
+
+}
+
+void ThresholdCheck(Item* iptr) //To be called at the time of purchase
+{
+    if(iptr->quantity < iptr->threshold_quantity)
     {
-        Item *iptr = aptr->head;
-        while(iptr != NULL && iptr->item_id != id)
-        {
-            iptr = iptr->next;
-        }
-        if(iptr != NULL)
-        {
-            if(iptr->next != NULL) iptr->next->prev = iptr->prev;
-            if(iptr->prev != NULL) iptr->prev->next = iptr->next;
-            else aisle->head = iptr->next;
-            free(iptr->itemname);
-            free(iptr->expiry_date);
-            free(iptr);
-        }
-        else
-        {
-            printf("Item not found! Cant delete\n");
-        }
+        printf("Item has gone beyond Threshold\n");
     }
     else
     {
-        printf("Aisle Not found\n");
+        printf("Item within Threshold limits\n");
     }
+}
+
+void main()
+{
+    int i, j;
+
+    FILE *file = fopen("walmart.csv", "r");
+
+    
+
 }
