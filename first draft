@@ -216,7 +216,10 @@ void DeleteItemId(int itemid)   //O(n)
             }
             if (iptr != NULL)
             {
-                iptr->prev->next = iptr->next;
+                if(iptr->prev != NULL)
+                    iptr->prev->next = iptr->next;
+                else
+                    AisleArray[i]->head = iptr->next;
                 if (iptr->next != NULL)
                     iptr->next->prev = iptr->prev;
                 FreeItem(iptr); // Frees    //Prevents memory leak
@@ -500,7 +503,7 @@ void PrintMart()
 
 void CreateMart(char *filename)
 {
-    int i, j;
+    int i, j, martSize, aisleSize;
     FILE *file = fopen(filename, "r");
 
     if (file == NULL)
@@ -509,15 +512,16 @@ void CreateMart(char *filename)
         return;
     }
 
-    for (i = 0; i < 5; i++)
+    fscanf(file, "%d\n", &martSize);
+    for (i = 0; i < martSize; i++)
     {
         char aislename[50];
         fgets(aislename, sizeof(aislename), file);
-
+        fscanf(file, "%d\n", &aisleSize);
         AisleArray[i] = CreateAisle(aislename, i);
 
         Item *last = NULL;
-        for (j = 0; j < 5; j++)
+        for (j = 0; j < aisleSize; j++)
         {
             int DD, MM, YY, id, quan, tq;
             char name[50];
@@ -743,6 +747,6 @@ void main()
     PrintMart();
     //PrintBills();
     //MergeAisles(2,3);
-    AddOrUpdateItem(6,"Lentils",10,10,5,24, 10,1);
-    PrintMart();
+    //AddOrUpdateItem(6,"Lentils",10,10,5,24, 10,1);
+    //PrintMart();
 }
