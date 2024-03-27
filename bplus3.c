@@ -34,7 +34,7 @@ typedef struct DataNode
 
 typedef struct KeyNode
 {
-    int KeyVal[ORDER];  //max can be order-1
+    int KeyVal[ORDER-1];  //max can be order-1
     int size;
     int utag;   //1 for Keyptr, 2 for Dataptr
     int ParentIndex;
@@ -46,19 +46,6 @@ typedef struct KeyNode
     }ptr;
 
 }KeyNode;
-
-Item *CreateItem(int id, char *name, int quan, date *d, int tq)
-{
-    Item *nitem = (Item *)malloc(sizeof(Item));
-    nitem->item_id = id;
-    nitem->itemname = (char *)malloc(strlen(name) + 1);
-    strcpy(nitem->itemname, name);
-    nitem->quantity = quan;
-    nitem->expiry_date = d;
-    nitem->threshold_quantity = tq;
-    nitem->next = nitem->prev = NULL;
-    return nitem;
-}
 
 KeyNode* InsertintoDataNode(DataNode *dptr, Item *iptr, KeyNode* origin_root);
 
@@ -486,9 +473,122 @@ Item *CreateItem(int id)
     return nitem;
 }
 
+KeyNode *DeletFromDataNode(int val, DataNode *dptr)
+{
+    if(dptr != NULL)
+    {
+        int i;
+        for(i = 0; i < dptr->size && dptr->ItemArr[i] != val; i++){}
+        if(i = dptr->size)
+        {
+            printf("No item matches the item id\n");
+        }
+        else
+        {
+            i++;
+            while(i < dptr->size)
+            {
+                dptr->ItemArr[i-1] = dptr->ItemArr[i];
+                i++;
+            }
+            dptr->size -= 1;
+        }
+        if(dptr->size -1 < MINCAPACITY)
+        {
+            if(dptr->next != NULL && dptr->next->parent == dptr->parent)
+            {
+                DataNode *temp = dptr->next;
+                if(temp->size - 1 > MINCAPACITY)
+                {
+                    dptr->ItemArr[dptr->size] = temp->ItemArr[0];
+                    i = 1;
+                    while(i < temp->size)
+                    {
+                        temp->ItemArr[i-1] = temp->ItemArr[i];
+                        i++;    
+                    }
+                    temp->size -= 1;
+                    temp->parent->KeyVal[temp->ParentIndex] = temp->ItemArr[0];
+                    dptr->size += 1;
+                }
+            }
+            else
+            {
+                if(dptr->prev != NULL && dptr->prev->parent == dptr->parent)
+                {
+                    DataNode *tptr = dptr->prev;
+                    if(tptr->size - 1 > MINCAPACITY)
+                    {
+                        int temp = dptr->size + 1;
+                        while(temp > 0)
+                        {
+                            dptr->ItemArr[temp] = dptr->ItemArr[temp - 1];
+                        }
+                    }   
+                }
+            }
+        }
+    }
+}
+
+KeyNode *Delete(KeyNode *root, int val, KeyNode *origin_root)
+{
+    if(root != NULL)
+    {
+        for(int i = 0; i < root->size; i++)
+        {
+            if(val < root->KeyVal[i])
+            {
+                if(root->utag == 2)
+                {
+                    printf("Deleting value %d from index %d\n", val, root->KeyVal[i]);
+                    return DeleteFromDataNode();
+                }
+                else
+                {
+                    printf("Going to the left of %d \n", root->KeyVal[i]);
+                     return Delete(root->ptr.Keyptr[i], val, origin_root);
+                }
+            }
+        }
+        if(root->utag == 2)
+        {
+            printf("Deleting value %d from right of %d\n", val, root->KeyVal[root->size-1]);
+            return DeleteFromDataNode();
+        }
+        else
+        {
+            printf("Going to the rightmost child of %d", root->KeyVal[root->size-1]);
+            return Delete(root->ptr.Keyptr[root->size], val, origin_root);
+        }
+    }
+}
+
+
 int main()
 {
     KeyNode *root = initializeBpTree(2);
+    root = Insert(root, CreateItem(5), root);
+    root = Insert(root, CreateItem(4), root);
+    root = Insert(root, CreateItem(6), root);
+    root = Insert(root, CreateItem(3), root);
+    root = Insert(root, CreateItem(7), root);
+    root = Insert(root, CreateItem(1), root);
+    root = Insert(root, CreateItem(10), root);
+    root = Insert(root, CreateItem(0), root);
+    root = Insert(root, CreateItem(11), root);
+    root = Insert(root, CreateItem(21), root);
+    root = Insert(root, CreateItem(20), root);
+    root = Insert(root, CreateItem(15), root);
+    root = Insert(root, CreateItem(8), root);
+    root = Insert(root, CreateItem(13), root);
+    root = Insert(root, CreateItem(17), root);
+    root = Insert(root, CreateItem(22), root);
+    root = Insert(root, CreateItem(25), root);
+    
+
     PrintBplus(root); 
+
     return 0;
 }
+
